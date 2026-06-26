@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Date Calculator</title>
+  <meta name="description" content="Tea Tang Date Calculator — add months, weeks and days to any date with a live clock." />
+</head>
+<body>
+
+<style>
+  :root {
+    --teatang-red:       #a10b14;
+    --teatang-red-hover: #80070e;
+    --teatang-red-light: rgba(161,11,20,0.06);
+    --teatang-gold:      #c5a059;
+    --border-col:        #e2dcd6;
+    --surface:           #ffffff;
+    --surface-alt:       #faf9f7;
+    --text-primary:      #2d2926;
+    --text-secondary:    #706b64;
+    --text-muted:        #a09890;
+    --radius:            12px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--surface-alt);
+    color: var(--text-primary);
+  }
+
+  /* ── WRAPPER ── */
+  .wrap {
+    max-width: 460px;
+    margin: 0 auto;
+    padding: 2rem 1rem 3rem;
+  }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--surface);
+    border: 1.5px solid var(--border-col);
+    border-radius: 18px;
+    padding: 2rem;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.05);
+    transition: box-shadow 0.3s;
+  }
+  .card:hover {
+    box-shadow: 0 14px 40px rgba(0,0,0,0.08);
+  }
+
+  /* ── BRAND HEADER ── */
+  .brand-header {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  .logo-img {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+    border-radius: 14px;
+    box-shadow: 0 6px 18px rgba(161,11,20,0.18);
+    transition: transform 0.3s, box-shadow 0.3s;
+    margin-bottom: 1rem;
+  }
+  .logo-img:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 24px rgba(161,11,20,0.28);
+  }
+  .brand-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.4px;
+    margin-bottom: 4px;
+  }
+  .brand-subtitle {
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+
+  /* ── LIVE CLOCK ── */
+  .live-clock {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 10px;
+    background: var(--teatang-red-light);
+    color: var(--teatang-red);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    text-transform: uppercase;
+  }
+
+  /* ── DIVIDER ── */
+  .section-divider {
+    border: none;
+    border-top: 1px solid var(--border-col);
+    margin: 1.5rem 0;
+  }
+
+  /* ── LABELS & INPUTS ── */
+  .field-group { margin-bottom: 1.25rem; }
+
+  .field-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-secondary);
+    margin-bottom: 7px;
+  }
+
+  .input-field {
+    width: 100%;
+    padding: 11px 13px;
+    font-size: 15px;
+    font-family: inherit;
+    color: var(--text-primary);
+    background: var(--surface-alt);
+    border: 1.5px solid var(--border-col);
+    border-radius: var(--radius);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  }
+  .input-field:focus {
+    border-color: var(--teatang-red);
+    background: var(--surface);
+    box-shadow: 0 0 0 3px rgba(161,11,20,0.08);
+  }
+  /* hide number spin arrows */
+  .input-field[type=number]::-webkit-inner-spin-button,
+  .input-field[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
+  .input-field[type=number] { -moz-appearance: textfield; }
+
+  /* ── DURATION GRID ── */
+  .duration-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+  }
+  .duration-grid .field-group { margin-bottom: 0; }
+
+  /* ── CALCULATE BUTTON ── */
+  .calc-btn {
+    width: 100%;
+    margin-top: 1.25rem;
+    padding: 13px 16px;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: inherit;
+    background: var(--teatang-red);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 4px 14px rgba(161,11,20,0.18);
+    transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+  }
+  .calc-btn:hover  { background: var(--teatang-red-hover); box-shadow: 0 6px 18px rgba(161,11,20,0.26); }
+  .calc-btn:active { transform: translateY(1px); }
+
+  /* ── RESULT BOX ── */
+  .result-box {
+    display: none;
+    margin-top: 1.5rem;
+    padding: 1.25rem 1.5rem;
+    background: var(--teatang-red-light);
+    border: 1px dashed rgba(161,11,20,0.2);
+    border-radius: var(--radius);
+    animation: fadeUp 0.28s ease-out;
+  }
+  @keyframes fadeUp {
+    from { opacity:0; transform:translateY(8px); }
+    to   { opacity:1; transform:translateY(0);   }
+  }
+  .result-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--teatang-red);
+    margin-bottom: 6px;
+  }
+  .result-date {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.2;
+  }
+  .result-day {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+  }
+
+  /* ── STAT ROW ── */
+  .stat-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-top: 1.25rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid rgba(161,11,20,0.1);
+  }
+  .stat {
+    background: var(--surface);
+    border: 1px solid var(--border-col);
+    border-radius: 10px;
+    padding: 12px 8px;
+    text-align: center;
+    transition: transform 0.2s, border-color 0.2s;
+  }
+  .stat:hover { transform: translateY(-2px); border-color: var(--teatang-gold); }
+  .stat-val { font-size: 18px; font-weight: 700; color: var(--teatang-red); }
+  .stat-lbl {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    margin-top: 3px;
+  }
+
+  /* ── RESET BUTTON ── */
+  .reset-btn {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    margin: 1rem auto 0;
+    padding: 7px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    color: var(--teatang-red);
+    background: none;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+    width: 100%;
+  }
+  .reset-btn:hover { background: var(--teatang-red-light); }
+
+  /* ── HISTORY SECTION ── */
+  .history-section {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-col);
+  }
+  .history-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .history-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 11px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border-col);
+    border-radius: var(--radius);
+    margin-bottom: 8px;
+    font-size: 13px;
+    transition: transform 0.2s, border-color 0.2s;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.02);
+  }
+  .history-item:hover { transform: translateX(3px); border-color: var(--teatang-gold); }
+  .history-from { color: var(--text-secondary); font-size: 12px; }
+  .history-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: var(--teatang-red-light);
+    color: var(--teatang-red);
+    margin-left: 6px;
+  }
+  .history-to { color: var(--teatang-red); font-weight: 700; }
+  .no-history {
+    font-size: 13px;
+    color: var(--text-muted);
+    text-align: center;
+    padding: 20px 0;
+    background: var(--surface-alt);
+    border: 1px dashed var(--border-col);
+    border-radius: var(--radius);
+  }
+</style>
+
+<div class="wrap">
+
+  <div class="card">
+
+    <!-- Brand Header -->
+    <div class="brand-header">
+      <img src="images.png" alt="Tea Tang Logo" class="logo-img" />
+      <div class="brand-title">Date Calculator</div>
+      <div class="brand-subtitle">Add months, weeks &amp; days to any date</div>
+      <div class="live-clock" id="live-clock">Loading...</div>
+    </div>
+
+    <hr class="section-divider" />
+
+    <!-- Start Date -->
+    <div class="field-group">
+      <label class="field-label" for="start-date">Start date</label>
+      <input type="date" id="start-date" class="input-field" />
+    </div>
+
+    <!-- Duration Grid -->
+    <div class="duration-grid">
+      <div class="field-group">
+        <label class="field-label" for="months-count">Months</label>
+        <input type="number" id="months-count" class="input-field" placeholder="0" min="0" max="9999" />
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="weeks-count">Weeks</label>
+        <input type="number" id="weeks-count" class="input-field" placeholder="0" min="0" max="9999" />
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="days-count">Days</label>
+        <input type="number" id="days-count" class="input-field" placeholder="0" min="0" max="99999" />
+      </div>
+    </div>
+
+    <!-- Calculate Button -->
+    <button class="calc-btn" id="calc-btn" onclick="calculate(true)">
+      &#128197; Calculate date
+    </button>
+
+    <!-- Result Box -->
+    <div class="result-box" id="result-box">
+      <div class="result-label">Result date</div>
+      <div class="result-date" id="result-date"></div>
+      <div class="result-day"  id="result-day"></div>
+      <div class="stat-row">
+        <div class="stat"><div class="stat-val" id="s-years"></div><div class="stat-lbl">years</div></div>
+        <div class="stat"><div class="stat-val" id="s-months"></div><div class="stat-lbl">months</div></div>
+        <div class="stat"><div class="stat-val" id="s-days"></div><div class="stat-lbl">days</div></div>
+      </div>
+    </div>
+
+    <!-- Reset Button -->
+    <button class="reset-btn" id="reset-btn" onclick="resetAll()">
+      &#8635; Reset
+    </button>
+
+  </div><!-- /card -->
+
+  <!-- Recent Calculations -->
+  <div class="history-section">
+    <div class="history-title">&#128336; Recent calculations</div>
+    <div id="history-list"><div class="no-history">No calculations yet</div></div>
+  </div>
+
+</div><!-- /wrap -->
+
+<script>
+const MONTHS_EN = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const DAYS_EN   = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+
+let calcHistory = [];
+let lastDateStr = '';
+
+/* ── Helpers ── */
+function padZ(n) { return String(n).padStart(2,'0'); }
+
+function toDateStr(d) {
+  return `${d.getFullYear()}-${padZ(d.getMonth()+1)}-${padZ(d.getDate())}`;
+}
+
+function parseDateStr(s) {
+  // Safe cross-browser parse: avoids UTC/timezone offset issues
+  const [y,m,d] = s.split('-').map(Number);
+  return new Date(y, m-1, d);
+}
+
+function diffBreakdown(from, to) {
+  let y = to.getFullYear() - from.getFullYear();
+  let m = to.getMonth()   - from.getMonth();
+  let d = to.getDate()    - from.getDate();
+  if (d < 0) { m--; d += new Date(to.getFullYear(), to.getMonth(), 0).getDate(); }
+  if (m < 0) { y--; m += 12; }
+  return { y, m, d };
+}
+
+function badgeLabel(m, w, d) {
+  const p = [];
+  if (m > 0) p.push(m + 'm');
+  if (w > 0) p.push(w + 'w');
+  if (d > 0) p.push(d + 'd');
+  return p.length ? '+' + p.join(' ') : '+0d';
+}
+
+/* ── Core calculation ── */
+function calculate(shouldLog) {
+  const dateVal  = document.getElementById('start-date').value;
+  const monthsV  = Math.max(0, parseInt(document.getElementById('months-count').value) || 0);
+  const weeksV   = Math.max(0, parseInt(document.getElementById('weeks-count').value)  || 0);
+  const daysV    = Math.max(0, parseInt(document.getElementById('days-count').value)   || 0);
+
+  // Hide result if no date yet
+  if (!dateVal) {
+    hideResult();
+    if (shouldLog) alert('Please pick a start date.');
+    return;
+  }
+
+  // Hide result if all durations are zero (nothing typed yet)
+  if (monthsV === 0 && weeksV === 0 && daysV === 0) {
+    hideResult();
+    if (shouldLog) alert('Please enter at least Months, Weeks, or Days to add.');
+    return;
+  }
+
+  const start  = parseDateStr(dateVal);
+  const result = parseDateStr(dateVal);
+
+  // Add months safely (clamp to end of target month to avoid overflow)
+  if (monthsV > 0) {
+    const dayOfMonth = result.getDate();
+    result.setDate(1);
+    result.setMonth(result.getMonth() + monthsV);
+    const maxDay = new Date(result.getFullYear(), result.getMonth() + 1, 0).getDate();
+    result.setDate(Math.min(dayOfMonth, maxDay));
+  }
+
+  // Add weeks & days
+  result.setDate(result.getDate() + weeksV * 7 + daysV);
+
+  const diff = diffBreakdown(start, result);
+
+  document.getElementById('result-date').textContent = toDateStr(result);
+  document.getElementById('result-day').textContent  = DAYS_EN[result.getDay()];
+  document.getElementById('s-years').textContent  = diff.y;
+  document.getElementById('s-months').textContent = diff.m;
+  document.getElementById('s-days').textContent   = diff.d;
+
+  showResult();
+
+  // Only log to history when user explicitly clicks or presses Enter
+  if (shouldLog) {
+    const entry = {
+      from:  toDateStr(start),
+      label: badgeLabel(monthsV, weeksV, daysV),
+      to:    toDateStr(result),
+      m: monthsV, w: weeksV, d: daysV
+    };
+    const top = calcHistory[0];
+    const isDupe = top &&
+      top.from === entry.from &&
+      top.m === entry.m &&
+      top.w === entry.w &&
+      top.d === entry.d;
+    if (!isDupe) {
+      calcHistory.unshift(entry);
+      if (calcHistory.length > 5) calcHistory.pop();
+      renderHistory();
+    }
+  }
+}
+
+function showResult() {
+  document.getElementById('result-box').style.display = 'block';
+  document.getElementById('reset-btn').style.display  = 'flex';
+}
+
+function hideResult() {
+  document.getElementById('result-box').style.display = 'none';
+  document.getElementById('reset-btn').style.display  = 'none';
+}
+
+/* ── History ── */
+function renderHistory() {
+  const el = document.getElementById('history-list');
+  if (calcHistory.length === 0) {
+    el.innerHTML = '<div class="no-history">No calculations yet</div>';
+    return;
+  }
+  el.innerHTML = calcHistory.map(h =>
+    `<div class="history-item">
+       <div>
+         <span class="history-from">${h.from}</span>
+         <span class="history-badge">${h.label}</span>
+       </div>
+       <div class="history-to">${h.to}</div>
+     </div>`
+  ).join('');
+}
+
+/* ── Reset ── */
+function resetAll() {
+  document.getElementById('months-count').value = '';
+  document.getElementById('weeks-count').value  = '';
+  document.getElementById('days-count').value   = '';
+  hideResult();
+  // Restore today's date
+  const t = new Date();
+  document.getElementById('start-date').value = toDateStr(t);
+}
+
+/* ── Live Clock (updates every second) ── */
+function updateClock() {
+  const now  = new Date();
+  const dateStr = toDateStr(now);
+  const clock = document.getElementById('live-clock');
+  if (clock) {
+    clock.textContent =
+      DAYS_EN[now.getDay()] + ', ' +
+      now.getDate() + ' ' + MONTHS_EN[now.getMonth()] + ' ' + now.getFullYear() +
+      '  ' +
+      padZ(now.getHours()) + ':' + padZ(now.getMinutes()) + ':' + padZ(now.getSeconds());
+  }
+  // Midnight rollover: auto-update start date if user hasn't changed it
+  if (lastDateStr && dateStr !== lastDateStr) {
+    const startEl = document.getElementById('start-date');
+    if (startEl.value === lastDateStr || !startEl.value) {
+      startEl.value = dateStr;
+      calculate(false);
+    }
+  }
+  lastDateStr = dateStr;
+}
+
+/* ── Event Listeners ── */
+['start-date','months-count','weeks-count','days-count'].forEach(id => {
+  const el = document.getElementById(id);
+  if (!el) return;
+  // Real-time silent update on input
+  el.addEventListener('input', () => calculate(false));
+  // Log to history on Enter
+  el.addEventListener('keydown', e => { if (e.key === 'Enter') calculate(true); });
+});
+
+/* ── Init ── */
+const t0 = new Date();
+document.getElementById('start-date').value = toDateStr(t0);
+lastDateStr = toDateStr(t0);
+updateClock();
+setInterval(updateClock, 1000);
+</script>
+
+</body>
+</html>
