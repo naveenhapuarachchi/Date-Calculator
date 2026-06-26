@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Date Calculator</title>
-  <meta name="description" content="Tea Tang Date Calculator — add months, weeks and days to any date with a live clock." />
+  <meta name="description" content="Tea Tang Date Calculator — add 1068 days to any date with a live clock." />
 </head>
 <body>
 
@@ -139,13 +139,35 @@
   .input-field[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
   .input-field[type=number] { -moz-appearance: textfield; }
 
-  /* ── DURATION GRID ── */
-  .duration-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 10px;
+  /* ── FIXED DAYS BADGE ── */
+  .fixed-days-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: var(--teatang-red-light);
+    border: 1.5px solid rgba(161,11,20,0.15);
+    border-radius: var(--radius);
+    margin-bottom: 1.25rem;
   }
-  .duration-grid .field-group { margin-bottom: 0; }
+  .fixed-days-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-secondary);
+  }
+  .fixed-days-value {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--teatang-red);
+  }
+  .fixed-days-unit {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+  }
 
   /* ── CALCULATE BUTTON ── */
   .calc-btn {
@@ -315,7 +337,7 @@
     <div class="brand-header">
       <img src="images.png" alt="Tea Tang Logo" class="logo-img" />
       <div class="brand-title">Date Calculator</div>
-      <div class="brand-subtitle">Add months, weeks &amp; days to any date</div>
+      <div class="brand-subtitle">Add 1068 days to any date</div>
       <div class="live-clock" id="live-clock">Loading...</div>
     </div>
 
@@ -327,26 +349,12 @@
       <input type="date" id="start-date" class="input-field" />
     </div>
 
-    <!-- Duration Grid -->
-    <div class="duration-grid">
-      <div class="field-group">
-        <label class="field-label" for="months-count">Months</label>
-        <input type="number" id="months-count" class="input-field" placeholder="0" min="0" max="9999" />
-      </div>
-      <div class="field-group">
-        <label class="field-label" for="weeks-count">Weeks</label>
-        <input type="number" id="weeks-count" class="input-field" placeholder="0" min="0" max="9999" />
-      </div>
-      <div class="field-group">
-        <label class="field-label" for="days-count">Days</label>
-        <input type="number" id="days-count" class="input-field" placeholder="0" min="0" max="99999" />
-      </div>
+    <!-- Fixed Days Badge -->
+    <div class="fixed-days-badge">
+      <span class="fixed-days-label">Fixed Days</span>
+      <span class="fixed-days-value">1068</span>
+      <span class="fixed-days-unit">days</span>
     </div>
-
-    <!-- Calculate Button -->
-    <button class="calc-btn" id="calc-btn" onclick="calculate(true)">
-      &#128197; Calculate date
-    </button>
 
     <!-- Result Box -->
     <div class="result-box" id="result-box">
@@ -404,49 +412,27 @@ function diffBreakdown(from, to) {
   return { y, m, d };
 }
 
-function badgeLabel(m, w, d) {
-  const p = [];
-  if (m > 0) p.push(m + 'm');
-  if (w > 0) p.push(w + 'w');
-  if (d > 0) p.push(d + 'd');
-  return p.length ? '+' + p.join(' ') : '+0d';
+const FIXED_DAYS = 1068;
+
+function badgeLabel() {
+  return '+' + FIXED_DAYS + 'd';
 }
 
 /* ── Core calculation ── */
 function calculate(shouldLog) {
-  const dateVal  = document.getElementById('start-date').value;
-  const monthsV  = Math.max(0, parseInt(document.getElementById('months-count').value) || 0);
-  const weeksV   = Math.max(0, parseInt(document.getElementById('weeks-count').value)  || 0);
-  const daysV    = Math.max(0, parseInt(document.getElementById('days-count').value)   || 0);
+  const dateVal = document.getElementById('start-date').value;
 
   // Hide result if no date yet
   if (!dateVal) {
     hideResult();
-    if (shouldLog) alert('Please pick a start date.');
-    return;
-  }
-
-  // Hide result if all durations are zero (nothing typed yet)
-  if (monthsV === 0 && weeksV === 0 && daysV === 0) {
-    hideResult();
-    if (shouldLog) alert('Please enter at least Months, Weeks, or Days to add.');
     return;
   }
 
   const start  = parseDateStr(dateVal);
   const result = parseDateStr(dateVal);
 
-  // Add months safely (clamp to end of target month to avoid overflow)
-  if (monthsV > 0) {
-    const dayOfMonth = result.getDate();
-    result.setDate(1);
-    result.setMonth(result.getMonth() + monthsV);
-    const maxDay = new Date(result.getFullYear(), result.getMonth() + 1, 0).getDate();
-    result.setDate(Math.min(dayOfMonth, maxDay));
-  }
-
-  // Add weeks & days
-  result.setDate(result.getDate() + weeksV * 7 + daysV);
+  // Add fixed 1068 days
+  result.setDate(result.getDate() + FIXED_DAYS);
 
   const diff = diffBreakdown(start, result);
 
@@ -458,20 +444,15 @@ function calculate(shouldLog) {
 
   showResult();
 
-  // Only log to history when user explicitly clicks or presses Enter
+  // Log to history on each date change
   if (shouldLog) {
     const entry = {
       from:  toDateStr(start),
-      label: badgeLabel(monthsV, weeksV, daysV),
-      to:    toDateStr(result),
-      m: monthsV, w: weeksV, d: daysV
+      label: badgeLabel(),
+      to:    toDateStr(result)
     };
     const top = calcHistory[0];
-    const isDupe = top &&
-      top.from === entry.from &&
-      top.m === entry.m &&
-      top.w === entry.w &&
-      top.d === entry.d;
+    const isDupe = top && top.from === entry.from;
     if (!isDupe) {
       calcHistory.unshift(entry);
       if (calcHistory.length > 5) calcHistory.pop();
@@ -510,13 +491,11 @@ function renderHistory() {
 
 /* ── Reset ── */
 function resetAll() {
-  document.getElementById('months-count').value = '';
-  document.getElementById('weeks-count').value  = '';
-  document.getElementById('days-count').value   = '';
   hideResult();
   // Restore today's date
   const t = new Date();
   document.getElementById('start-date').value = toDateStr(t);
+  calculate(false);
 }
 
 /* ── Live Clock (updates every second) ── */
@@ -543,19 +522,21 @@ function updateClock() {
 }
 
 /* ── Event Listeners ── */
-['start-date','months-count','weeks-count','days-count'].forEach(id => {
-  const el = document.getElementById(id);
-  if (!el) return;
-  // Real-time silent update on input
-  el.addEventListener('input', () => calculate(false));
+const startEl2 = document.getElementById('start-date');
+if (startEl2) {
+  // Real-time silent update on date change
+  startEl2.addEventListener('input', () => calculate(false));
   // Log to history on Enter
-  el.addEventListener('keydown', e => { if (e.key === 'Enter') calculate(true); });
-});
+  startEl2.addEventListener('keydown', e => { if (e.key === 'Enter') calculate(true); });
+  // Log to history when date picker closed (change event)
+  startEl2.addEventListener('change', () => calculate(true));
+}
 
 /* ── Init ── */
 const t0 = new Date();
 document.getElementById('start-date').value = toDateStr(t0);
 lastDateStr = toDateStr(t0);
+calculate(false);   // show result immediately on page load
 updateClock();
 setInterval(updateClock, 1000);
 </script>
